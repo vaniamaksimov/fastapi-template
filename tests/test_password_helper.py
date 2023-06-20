@@ -14,9 +14,11 @@ def test_password_helper_hash_password(password: str):
     argvalues=[
         ('$2b$12$p3TuD6sX/972B5D1jT7FZu3vjdQ8gOrWr5ZHaJHNAXF0nOFzNTrjW', True),
         ('$2b$12$p3TuD6sX/972B5D1jT7FZu3vjdQ8gOrWr5ZHaJHNAXF1nOFzNTrjW', False),
-    ]
+    ],
 )
-def test_password_helper_validate_password(password: str, hash: str, expected_result: bool):
+def test_password_helper_validate_password(
+    password: str, hash: str, expected_result: bool
+):
     verify_result = password_helper.verify(password, hash)
     assert verify_result == expected_result
 

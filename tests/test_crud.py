@@ -10,7 +10,8 @@ from src.utils.app_exceptions.crud import InvalidAttrNameError, InvalidOperatorE
 from tests.factories.user_factory import CustomerFactory
 
 
-parse = lambda stmt: sqlparse.format(str(stmt), reindent=True, keyword_case='upper')
+def parse(stmt):
+    return sqlparse.format(str(stmt), reindent=True, keyword_case='upper')
 
 
 async def test_crud_get(session: AsyncSession):
@@ -54,29 +55,46 @@ async def test_crud_delete(session: AsyncSession):
     assert len(db_user) == 0
     assert len(db_customer) == 0
 
+
 @pytest.mark.parametrize(
-        argnames=['kwargs', 'expected'],
-        argvalues=[
-            (None, select(User)),
-            ({'email': 'email@gmail.com'}, select(User).where(User.email=='email@gmail.com')),
-            ({'email__neq': 'email@gmail.com'}, select(User).where(User.email!='email@gmail.com')),
-            ({'email__eq': 'email@gmail.com'}, select(User).where(User.email=='email@gmail.com')),
-            ({'email': 'email@gmail.com', 'first_name': 'John'}, select(User).where((User.email=='email@gmail.com') & (User.first_name=='John'))),
-        ]
+    argnames=['kwargs', 'expected'],
+    argvalues=[
+        (None, select(User)),
+        (
+            {'email': 'email@gmail.com'},
+            select(User).where(User.email == 'email@gmail.com'),
+        ),
+        (
+            {'email__neq': 'email@gmail.com'},
+            select(User).where(User.email != 'email@gmail.com'),
+        ),
+        (
+            {'email__eq': 'email@gmail.com'},
+            select(User).where(User.email == 'email@gmail.com'),
+        ),
+        (
+            {'email': 'email@gmail.com', 'first_name': 'John'},
+            select(User).where(
+                (User.email == 'email@gmail.com') & (User.first_name == 'John')
+            ),
+        ),
+    ],
 )
 def test_crud_make_statement(kwargs, expected):
-    stmt = user_crud._make_statement(**kwargs) if kwargs else user_crud._make_statement()
+    stmt = (
+        user_crud._make_statement(**kwargs) if kwargs else user_crud._make_statement()
+    )
     expected_stmt = expected
     assert parse(stmt) == parse(expected_stmt)
 
 
 @pytest.mark.parametrize(
-        argnames=['kwargs', 'exception'],
-        argvalues=[
-            ({'unexpected_field': 'some_value'}, InvalidAttrNameError),
-            ({'unexpected_field__eq': 'some_value'}, InvalidAttrNameError),
-            ({'email__unexpected_operator': 'some_value'}, InvalidOperatorError),
-        ]
+    argnames=['kwargs', 'exception'],
+    argvalues=[
+        ({'unexpected_field': 'some_value'}, InvalidAttrNameError),
+        ({'unexpected_field__eq': 'some_value'}, InvalidAttrNameError),
+        ({'email__unexpected_operator': 'some_value'}, InvalidOperatorError),
+    ],
 )
 def test_crud_make_statement_raise_error(kwargs, exception):
     with pytest.raises(exception):

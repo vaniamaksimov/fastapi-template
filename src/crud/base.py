@@ -4,8 +4,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.utils.app_exceptions.crud import (InvalidAttrNameError,
-                                           InvalidOperatorError)
+from src.utils.app_exceptions.crud import InvalidAttrNameError, InvalidOperatorError
 from src.utils.app_types import CreateSchemaType, ModelType, UpdateSchemaType
 from src.utils.operator import Operator
 
@@ -19,21 +18,28 @@ class CrudBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         database_object = await session.execute(statement)
         return database_object.scalars().all()
 
-    async def create(self, session: AsyncSession, schema: CreateSchemaType) -> ModelType:
+    async def create(
+        self, session: AsyncSession, schema: CreateSchemaType
+    ) -> ModelType:
         database_object = self.model(**schema.dict())
         session.add(database_object)
         await session.commit()
         await session.flush(database_object)
         return database_object
 
-    async def update(self, session: AsyncSession, database_object: ModelType, schema: UpdateSchemaType) -> ModelType:
+    async def update(
+        self,
+        session: AsyncSession,
+        database_object: ModelType,
+        schema: UpdateSchemaType,
+    ) -> ModelType:
         object_data = jsonable_encoder(database_object)
         update_data = schema.dict(exclude_unset=True)
         for field_data_name in object_data:
             if field_data_name in update_data:
-                setattr(database_object,
-                        field_data_name,
-                        update_data.get(field_data_name))
+                setattr(
+                    database_object, field_data_name, update_data.get(field_data_name)
+                )
         session.add(database_object)
         await session.commit()
         await session.flush(database_object)
@@ -67,9 +73,13 @@ class CrudBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                 case Operator.LESSEQUAL:
                     stmt = stmt.where(getattr(self.model, collumn_name) <= value)
                 case Operator.LIKE:
-                    stmt = stmt.where(getattr(self.model, collumn_name).like(f'%{value}%'))
+                    stmt = stmt.where(
+                        getattr(self.model, collumn_name).like(f'%{value}%')
+                    )
                 case Operator.ILIKE:
-                    stmt = stmt.where(getattr(self.model, collumn_name).ilike(f'%{value}%'))
+                    stmt = stmt.where(
+                        getattr(self.model, collumn_name).ilike(f'%{value}%')
+                    )
                 case Operator.ISNULL:
                     if value:
                         stmt = stmt.where(getattr(self.model, collumn_name) is None)

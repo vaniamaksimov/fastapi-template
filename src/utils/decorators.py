@@ -15,11 +15,9 @@ def crud_error_handler(coroutine: Coroutine[Any, Any, ModelType]):
         try:
             result = await coroutine(*args, **kwargs)
         except BaseCrudError as e:
-            raise HTTPException(
-                status_code=HTTPStatus.BAD_REQUEST,
-                detail=e.message
-            )
+            raise HTTPException(status_code=HTTPStatus.BAD_REQUEST, detail=e.message)
         return result
+
     return wrapper
 
 
@@ -31,7 +29,8 @@ def integrity_error_handler(coroutine: Coroutine[Any, Any, ModelType]):
         except IntegrityError as e:
             raise HTTPException(
                 status_code=HTTPStatus.BAD_REQUEST,
-                detail=f'Не удалось выполнить запрос, оригинал ошибки: {e}'
+                detail=f'Не удалось выполнить запрос, оригинал ошибки: {e}',
             )
         return result
+
     return wrapper

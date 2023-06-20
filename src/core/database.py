@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
 from .settings import settings
 
-class Base(DeclarativeBase):
 
+class Base(DeclarativeBase):
     @declared_attr.directive
     def __tablename__(cls) -> str:
         return cls.__name__.lower()

@@ -5,7 +5,9 @@ from src.utils.app_types import ModelType
 class MessageMixin(Protocol):
     message: str
 
-class BaseCrudError(MessageMixin, Exception): ...
+
+class BaseCrudError(MessageMixin, Exception):
+    ...
 
 
 class InvalidAttrNameError(BaseCrudError):

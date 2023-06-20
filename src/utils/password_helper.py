@@ -2,8 +2,8 @@ from passlib import pwd
 from passlib.context import CryptContext
 from src.core import settings
 
-class PasswordHelper:
 
+class PasswordHelper:
     def __init__(self, context: CryptContext = None) -> None:
         self.context = context or CryptContext(
             schemes=[settings.app.crypt_schema.get_secret_value()],

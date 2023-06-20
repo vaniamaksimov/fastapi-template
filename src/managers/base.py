@@ -70,7 +70,9 @@ class BaseManager(Generic[ModelType, CrudType, CreateSchemaType, UpdateSchemaTyp
     @integrity_error_handler
     async def update(self, db_obj: ModelType, schema: UpdateSchemaType) -> ModelType:
         update_schema = await self._before_update(db_obj, schema)
-        db_obj = await self.crud.update(session=self.session, database_object=db_obj, schema=update_schema)
+        db_obj = await self.crud.update(
+            session=self.session, database_object=db_obj, schema=update_schema
+        )
         await self._after_update(db_obj)
         return db_obj
 
