@@ -43,7 +43,7 @@ class BaseManager(Generic[ModelType, CrudType, CreateSchemaType, UpdateSchemaTyp
     async def get(self, **kwargs) -> ModelType:
         await self._before_get(**kwargs)
         db_obj = await self.crud.get(session=self.session, **kwargs)
-        await self._after_create(db_obj)
+        await self._after_get(db_obj)
         return await self.crud.get(self.session, **kwargs)
 
     async def _after_get(self, db_obj: ModelType) -> None:
