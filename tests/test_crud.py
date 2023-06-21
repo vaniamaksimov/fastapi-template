@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.crud import user_crud
 from src.models.user import User
-from src.schemas.user import UserCreate
+from src.schemas.user import UserCreate, UserUpdate
 from src.utils.app_exceptions.crud import InvalidAttrNameError, InvalidOperatorError
 from tests.factories.user_factory import UserFactory
 
@@ -54,6 +54,23 @@ async def test_crud_delete(session: AsyncSession):
     db_customer = db_customer.scalars().all()
     assert len(db_user) == 0
     assert len(db_customer) == 0
+
+
+async def test_crud_update(session: AsyncSession, user_update_schema: UserUpdate):
+    user = UserFactory(first_name='OldFirstName', last_name='OldLastName')
+    session.add(user)
+    await session.commit()
+    db_user = (
+        (await session.execute(select(User).where(User.first_name == user.first_name)))
+        .scalars()
+        .first()
+    )
+    assert db_user.first_name == user.first_name
+    assert db_user.last_name == user.last_name
+    updated_user = await user_crud.update(session, db_user, user_update_schema)
+    assert db_user.id == updated_user.id
+    assert updated_user.first_name == 'NewFirstName'
+    assert updated_user.last_name == 'NewLastName'
 
 
 @pytest.mark.parametrize(
