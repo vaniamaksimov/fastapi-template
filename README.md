@@ -1,1 +1,1 @@
-pytest --cov --cov-report=html:coverage_re
+pytest --cov=src tests/ --cov-report=html:coverage_re
