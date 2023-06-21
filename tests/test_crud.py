@@ -4,10 +4,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.crud import user_crud
-from src.models.user import Customer, User
+from src.models.user import User
 from src.schemas.user import UserCreate
 from src.utils.app_exceptions.crud import InvalidAttrNameError, InvalidOperatorError
-from tests.factories.user_factory import CustomerFactory
+from tests.factories.user_factory import UserFactory
 
 
 def parse(stmt):
@@ -15,9 +15,9 @@ def parse(stmt):
 
 
 async def test_crud_get(session: AsyncSession):
-    users = CustomerFactory.build_batch(9)
+    users = UserFactory.build_batch(9)
     session.add_all(users)
-    user = CustomerFactory(email='my-email@google.com')
+    user = UserFactory(email='my-email@google.com')
     session.add(user)
     await session.commit()
     db_user = await user_crud.get(session, email='my-email@google.com')
@@ -35,22 +35,22 @@ async def test_crud_create(session: AsyncSession, user_create_schema: UserCreate
 
 
 async def test_crud_delete(session: AsyncSession):
-    user = CustomerFactory()
+    user = UserFactory()
     session.add(user)
     await session.commit()
     db_user = await session.execute(select(User))
     db_user = db_user.scalars().all()
-    db_customer = await session.execute(select(Customer))
+    db_customer = await session.execute(select(User))
     db_customer = db_customer.scalars().all()
     assert len(db_user) == 1
     assert db_user[0] == user
     assert len(db_customer) == 1
-    assert db_customer[0].user_id == db_user[0].id
+    assert db_customer[0].id == db_user[0].id
     del_obj = await user_crud.remove(session, user)
     assert user == del_obj
     db_user = await session.execute(select(User))
     db_user = db_user.scalars().all()
-    db_customer = await session.execute(select(Customer))
+    db_customer = await session.execute(select(User))
     db_customer = db_customer.scalars().all()
     assert len(db_user) == 0
     assert len(db_customer) == 0

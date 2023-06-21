@@ -3,20 +3,36 @@ import asyncio
 import pytest
 from asgi_lifespan import LifespanManager
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
+from src.core.database import Base
 
-from src.core.database import engine
 from src.core.dependencies import get_async_session
 from src.main import app
 
 pytest_plugins = [
     'tests.fixtures.password_helper_fixtures',
     'tests.fixtures.crud_fixtures',
+    'tests.fixtures.manager_fixtures',
 ]
 
 
 @pytest.fixture
-async def connection():
+async def engine():
+    return create_async_engine(url='sqlite+aiosqlite:///./test_fastapi.db')
+
+
+@pytest.fixture(scope='session', autouse=True)
+async def create_db():
+    engine = create_async_engine(url='sqlite+aiosqlite:///./test_fastapi.db')
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+
+@pytest.fixture
+async def connection(engine):
     async with engine.begin() as conn:
         yield conn
         await conn.rollback()

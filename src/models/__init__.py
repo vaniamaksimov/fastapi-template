@@ -1,1 +1,1 @@
-from .user import User, Admin, Customer  # noqa
+from .user import User  # noqa
