@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.security import OAuth2PasswordRequestForm
 
-from src.core.dependencies import session_manager, user_manager, user_session
+from src.core.dependencies import only_authorized, session_manager, user_manager
 from src.managers.session import SessionManager
 from src.managers.user import UserManager
-from src.models.session import Session
 from src.schemas.login_response import LoginResponse
 from src.schemas.user import UserCreate, UserDB
 
@@ -26,9 +25,9 @@ async def login(
     return await user_manager.login(login_data)
 
 
-@router.get(path='/logout')
+@router.get(path='/logout', dependencies=[Depends(only_authorized)])
 async def logout(
-    user_session: Session = Depends(user_session),
+    request: Request,
     session_manager: SessionManager = Depends(session_manager),
 ):
-    return await session_manager.remove(user_session)
+    return await session_manager.remove(request.state.user_session)

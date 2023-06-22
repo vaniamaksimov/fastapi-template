@@ -5,11 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.managers.session import SessionManager
 
 from src.managers.user import UserManager
-from src.models.session import Session
-from src.models.user import User
-from src.utils.app_exceptions.manager import ManagerError
 from src.utils.token_helper import token_helper
-
+from fastapi.security.utils import get_authorization_scheme_param
 from .database import AsyncSessionLocal
 
 oauth2bearer = OAuth2PasswordBearer(tokenUrl="api/v1/login", auto_error=False)
@@ -20,49 +17,50 @@ async def get_async_session() -> AsyncSession:
         yield async_session
 
 
-async def user_manager(
-    request: Request, session: AsyncSession = Depends(get_async_session)
-) -> UserManager:
-    return UserManager(session, request)
-
-
-async def session_manager(
+async def add_db_session_to_request(
     request: Request, session: AsyncSession = Depends(get_async_session)
 ):
-    return SessionManager(session, request)
+    request.state.db_session = session
 
 
-async def user_session(
-    bearer_token: str = Depends(oauth2bearer),
-    session_manager: SessionManager = Depends(session_manager),
+async def add_current_user_to_request(
+    request: Request,
 ):
-    if bearer_token:
-        token_data = token_helper.decode(bearer_token)
+    authorization = request.headers.get("Authorization")
+    scheme, param = get_authorization_scheme_param(authorization)
+    request.state.user = None
+    request.state.user_session = None
+    if authorization and scheme.lower() == "bearer":
         try:
-            return await session_manager.get(id=token_data.sid)
-        except ManagerError:
+            token_data = token_helper.decode(param)
+            user_session = await SessionManager(request.state.db_session, request).get(
+                id=token_data.sid
+            )
+            request.state.user_session = user_session
+            request.state.user = await user_session.awaitable_attrs.user
+        except HTTPException:
             pass
-    raise HTTPException(
-        status_code=HTTPStatus.UNAUTHORIZED,
-        detail="Invalid authentication credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
 
 
-async def current_user(
-    user_session: Session = Depends(user_session),
-):
-    user: User = await user_session.awaitable_attrs.user
-    if not user.is_active:
+async def only_authorized(request: Request, bearer_token: str = Depends(oauth2bearer)):
+    if not request.state.user:
         raise HTTPException(
-            status_code=HTTPStatus.FORBIDDEN, detail='Необходимо подтвердить почту.'
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
         )
-    return user
 
 
-async def current_superuser(user: User = Depends(current_user)):
-    if not user.is_superuser:
+async def current_superuser(request: Request):
+    if not request.state.user:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN, detail='Недостаточно прав.'
         )
-    return user
+
+
+async def user_manager(request: Request) -> UserManager:
+    return UserManager(request.state.db_session, request)
+
+
+async def session_manager(request: Request):
+    return SessionManager(request.state.db_session, request)
