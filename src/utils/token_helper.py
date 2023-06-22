@@ -24,4 +24,4 @@ class TokenHelper:
             )
 
 
-bearer_token_helper = TokenHelper()
+token_helper = TokenHelper()

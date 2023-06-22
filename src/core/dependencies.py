@@ -5,8 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.managers.session import SessionManager
 
 from src.managers.user import UserManager
+from src.models.session import Session
 from src.models.user import User
-from src.schemas.token import TokenData
+from src.utils.app_exceptions.manager import ManagerError
+from src.utils.token_helper import token_helper
 
 from .database import AsyncSessionLocal
 
@@ -30,17 +32,27 @@ async def session_manager(
     return SessionManager(session, request)
 
 
-async def authenticate(bearer_token: str = Depends(oauth2bearer)):
+async def user_session(
+    bearer_token: str = Depends(oauth2bearer),
+    session_manager: SessionManager = Depends(session_manager),
+):
     if bearer_token:
-        ...
-    raise
+        token_data = token_helper.decode(bearer_token)
+        try:
+            return await session_manager.get(id=token_data.sid)
+        except ManagerError:
+            pass
+    raise HTTPException(
+        status_code=HTTPStatus.UNAUTHORIZED,
+        detail="Invalid authentication credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
 
 async def current_user(
-    token_data: TokenData = Depends(authenticate),
-    user_manager: UserManager = Depends(UserManager),
+    user_session: Session = Depends(user_session),
 ):
-    user = await user_manager.get(id=token_data.user_id)
+    user: User = await user_session.awaitable_attrs.user
     if not user.is_active:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN, detail='Необходимо подтвердить почту.'

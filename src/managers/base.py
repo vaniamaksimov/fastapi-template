@@ -52,7 +52,7 @@ class BaseManager(Generic[ModelType, CrudType, CreateSchemaType, UpdateSchemaTyp
                 )
             case 1:
                 await self._after_get(db_obj)
-                return await db_obj[0]
+                return db_obj[0]
             case _:
                 raise MultipleOutputError(
                     status_code=HTTPStatus.BAD_REQUEST,
