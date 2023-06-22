@@ -10,6 +10,7 @@ class ABCSettings(BaseSettings, ABC):
 class AppSettings(ABCSettings):
     secret_key: SecretStr
 
+    algorithm: SecretStr
     crypt_schema: SecretStr
     max_string_length: int = 255
 

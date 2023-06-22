@@ -1,7 +1,9 @@
+from http import HTTPStatus
 from typing import Generic
 
 from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from src.utils.app_exceptions.manager import MultipleOutputError, NotFoundInDBError
 
 from src.utils.app_types import (
     CreateSchemaType,
@@ -43,8 +45,19 @@ class BaseManager(Generic[ModelType, CrudType, CreateSchemaType, UpdateSchemaTyp
     async def get(self, **kwargs) -> ModelType:
         await self._before_get(**kwargs)
         db_obj = await self.crud.get(session=self.session, **kwargs)
-        await self._after_get(db_obj)
-        return await self.crud.get(self.session, **kwargs)
+        match len(db_obj):
+            case 0:
+                raise NotFoundInDBError(
+                    status_code=HTTPStatus.NOT_FOUND, detail='Объект не найден.'
+                )
+            case 1:
+                await self._after_get(db_obj)
+                return await db_obj[0]
+            case _:
+                raise MultipleOutputError(
+                    status_code=HTTPStatus.BAD_REQUEST,
+                    detail='По указанным аргументам найдено более одного объекта',
+                )
 
     async def _after_get(self, db_obj: ModelType) -> None:
         ...

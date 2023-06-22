@@ -6,7 +6,7 @@ from src.managers.user import UserManager
 from src.schemas.user import UserCreateAdmin, UserDB, UserUpdateAdmin
 
 
-router = APIRouter(prefix='/user')
+router = APIRouter(prefix='/user', tags=['Admin'])
 
 
 @router.get(path='', response_model=list[UserDB])

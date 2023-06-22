@@ -12,7 +12,8 @@ class UserCreate(BaseModel):
 
 
 class UserCreateAdmin(UserCreate):
-    is_admin: bool
+    is_active: bool | None
+    is_superuser: bool | None
 
     class Config(UserCreate.Config):
         ...
@@ -27,7 +28,8 @@ class UserUpdate(BaseModel):
 
 
 class UserUpdateAdmin(UserUpdate):
-    is_admin: bool | None
+    is_active: bool | None
+    is_superuser: bool | None
 
     class Config(UserUpdate.Config):
         ...
@@ -39,7 +41,7 @@ class UserDB(BaseModel):
     first_name: str | None
     last_name: str | None
     is_active: bool
-    is_admin: bool
+    is_superuser: bool
 
     class Config:
         orm_mode = True
