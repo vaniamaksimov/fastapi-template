@@ -1,12 +1,14 @@
 from http import HTTPStatus
+
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordBearer
+from fastapi.security.utils import get_authorization_scheme_param
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.managers.session import SessionManager
 
+from src.managers.session import SessionManager
 from src.managers.user import UserManager
 from src.utils.token_helper import token_helper
-from fastapi.security.utils import get_authorization_scheme_param
+
 from .database import AsyncSessionLocal
 
 oauth2bearer = OAuth2PasswordBearer(tokenUrl="api/v1/login", auto_error=False)
@@ -52,7 +54,7 @@ async def only_authorized(request: Request, bearer_token: str = Depends(oauth2be
 
 
 async def current_superuser(request: Request):
-    if not request.state.user:
+    if not request.state.user.is_superuser:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN, detail='Недостаточно прав.'
         )

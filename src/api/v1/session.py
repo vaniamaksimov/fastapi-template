@@ -17,8 +17,8 @@ async def user_sessions(request: Request):
 
 @router.delete(path='/{session_id}', response_model=SessionDB)
 async def delete_session(
-    session_id: int, session_manager: SessionManager = Depends(session_manager)
+    session_id: int,
+    session_manager: SessionManager = Depends(session_manager),
 ):
     session = await session_manager.get(id=session_id)
-    session
-    return
+    return await session_manager.remove(session)

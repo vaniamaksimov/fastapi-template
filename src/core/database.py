@@ -1,5 +1,5 @@
+from sqlalchemy.ext.asyncio import AsyncAttrs, AsyncSession, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, declared_attr, sessionmaker
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, AsyncAttrs
 
 from .settings import settings
 

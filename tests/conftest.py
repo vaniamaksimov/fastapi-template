@@ -11,6 +11,7 @@ from src.core.dependencies import get_async_session
 from src.main import app
 from src.models.user import User
 from src.utils import password_helper
+from tests.factories.session_factory import SessionFactory
 from tests.factories.user_factory import UserFactory
 
 pytest_plugins = [
@@ -86,3 +87,12 @@ async def auth_client(test_user: User, client: AsyncClient):
     token = response_data.get('access_token')
     client.headers.update({'Authorization': f'Bearer {token}'})
     return client
+
+
+@pytest.fixture
+async def another_user_session(session: AsyncSession):
+    user_session = SessionFactory()
+    session.add(user_session)
+    await session.commit()
+    await session.flush(user_session)
+    return user_session

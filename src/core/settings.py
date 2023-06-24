@@ -1,5 +1,6 @@
-from pydantic import BaseSettings, Field, PostgresDsn, SecretStr, BaseModel, validator
 from abc import ABC
+
+from pydantic import BaseModel, BaseSettings, Field, PostgresDsn, SecretStr, validator
 
 
 class ABCSettings(BaseSettings, ABC):
